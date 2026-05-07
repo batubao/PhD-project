@@ -1,29 +1,43 @@
-# ============================================================
-# FULL REVISED PIPELINE + EDGE ENHANCEMENT BRANCH
-#
-# Method:
-#   - Raw image -> multiscale raw patches
-#   - DenseNet201 per crop -> 1920-d node feature
-#   - Cache full multiscale graphs
-#   - Train baseline GCN on full graphs
-#   - Compute perturbation saliency per node
-#   - Final model:
-#       cross-scale attention
-#       collapse to MEDIUM nodes only
-#       dense full-image branch -> 8x8 feature grid
-#       edge enhancement from dense branch
-#       edge-weighted GCN classification
-#
-# Metrics:
-#   - ACC
-#   - F1 macro
-#   - F1 weighted
-#   - Precision
-#   - Recall
-#   - AUC
-# ============================================================
-
+!pip install opendatasets
 !pip -q install torch-geometric torchvision
+
+import opendatasets as od
+import os
+import shutil
+
+od.download('https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia')
+
+# Define the root directories
+root_dir = '/content/chest-xray-pneumonia/chest_xray'
+subdirs = ['train', 'test', 'val']
+destination_root = os.path.join(root_dir, 'lung')
+
+# Create the destination root directory if it doesn't exist
+os.makedirs(destination_root, exist_ok=True)
+
+# Iterate through each subset directory (train, test, valid)
+for subset in subdirs:
+    subset_path = os.path.join(root_dir, subset)
+
+    # Iterate through each class folder within the subset
+    for class_name in os.listdir(subset_path):
+        class_src_path = os.path.join(subset_path, class_name)
+        class_dest_path = os.path.join(destination_root, class_name)
+
+        # Create the class folder in the destination if it doesn't exist
+        os.makedirs(class_dest_path, exist_ok=True)
+
+        # Move all images from the source class folder to the destination class folder
+        for filename in os.listdir(class_src_path):
+            src_file = os.path.join(class_src_path, filename)
+            dest_file = os.path.join(class_dest_path, filename)
+
+            # Move the file
+            shutil.move(src_file, dest_file)
+
+print("Merge complete. All images are now in:", destination_root)
+
+
 
 import os, glob, hashlib, random
 import numpy as np
