@@ -1,0 +1,7 @@
+torch
+torchvision
+torch-geometric
+numpy
+Pillow
+scikit-learn
+opendatasets
